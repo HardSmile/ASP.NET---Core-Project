@@ -4,7 +4,7 @@ namespace Project.Models.Cars
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using static Data.DataConstants;
+using static Data.DataConstants.Car;
     public class AddCarFormModel
     {
         [Required]
