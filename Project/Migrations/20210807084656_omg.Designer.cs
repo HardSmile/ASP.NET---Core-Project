@@ -10,8 +10,8 @@ using Project.Data;
 namespace Project.Migrations
 {
     [DbContext(typeof(CarRentingDbContext))]
-    [Migration("20210806190856_DealersTable")]
-    partial class DealersTable
+    [Migration("20210807084656_omg")]
+    partial class omg
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -304,7 +304,7 @@ namespace Project.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Dealer");
+                    b.ToTable("Dealers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

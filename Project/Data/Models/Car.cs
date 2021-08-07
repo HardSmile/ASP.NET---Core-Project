@@ -2,7 +2,7 @@
 
 namespace Project.Data.Models
 {
-using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations;
     using static DataConstants.Car;
     public class Car
     {   

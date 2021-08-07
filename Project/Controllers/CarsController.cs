@@ -1,23 +1,27 @@
 ﻿
 namespace Project.Controllers
 {
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
     using Project.Data;
     using Project.Data.Models;
+    using Project.Infrastructure;
     using Project.Models.Cars;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Security.Claims;
 
     public class CarsController : Controller
     {
         private readonly CarRentingDbContext data;
 
-        public CarsController(CarRentingDbContext data)=>this.data = data;
+        public CarsController(CarRentingDbContext data) => this.data = data;
 
 
 
-        public IActionResult All([FromQuery]AllCarsQueryModel query)
+        public IActionResult All([FromQuery] AllCarsQueryModel query)
         {
             var carsQuery = this.data.Cars.AsQueryable();
             if (!string.IsNullOrWhiteSpace(query.Brand))
@@ -34,11 +38,11 @@ namespace Project.Controllers
             {
                 CarSorting.DateCreated => carsQuery
                 .OrderByDescending(c => c.Id),
-               CarSorting.Year => carsQuery
-                .OrderByDescending(c => c.Year),
+                CarSorting.Year => carsQuery
+                 .OrderByDescending(c => c.Year),
                 CarSorting.BrandAndModel => carsQuery
                 .OrderByDescending(c => c.Brand)
-                .ThenBy(c=>c.Model)
+                .ThenBy(c => c.Model)
             };
             var totalCars = carsQuery.Count();
             var cars = carsQuery
@@ -64,18 +68,43 @@ namespace Project.Controllers
             query.TotalCars = totalCars;
             return View(query);
         }
-        public IActionResult Add() => View(new AddCarFormModel
+
+        [Authorize]
+        public IActionResult Add()
         {
-            Categories = this.GetCarCategories()
+            if (!this.UserIsDealer())
+            {
+               
+                return RedirectToAction(nameof(DealersController.Create), "Dealers");
+            }
+            else
+            {
+
+            return View(new AddCarFormModel
+        {
+                Categories = this.GetCarCategories()
         });
+
+            }
+                
+    }
         [HttpPost]
-        public IActionResult Add(AddCarFormModel car, IFormFile image)
-     {
-     ///     if(image != null ||image.Length > 2 * 1024 * 1024)
-     ///       {
-     ///           this.ModelState.AddModelError("Image", "The image is not valid.It is required and it should be less than 2MB.");
-     ///     }
-            if(!this.data.Categories.Any(c=>c.Id == car.CategoryId))
+        [Authorize]
+        public IActionResult Add(AddCarFormModel car)
+        {
+            var dealerId = this.data
+                .Dealers
+                .Where(d => d.UserId == User.GetId())
+                .Select(d => d.Id)
+                .FirstOrDefault();
+            if(dealerId == 0)
+            {
+                return RedirectToAction(nameof(DealersController.Create), "Dealers");
+            }
+               
+          
+
+            if (!this.data.Categories.Any(c=>c.Id == car.CategoryId))
             {
                 this.ModelState.AddModelError(nameof(car.CategoryId), "Category does not exist.");
             }
@@ -91,7 +120,8 @@ namespace Project.Controllers
                 Descriptiom = car.Description,
                 Year = car.Year,
                 ImageUrl = car.ImageUrl,
-                CategoryId = car.CategoryId
+                CategoryId = car.CategoryId,
+                DealerId = dealerId
 
             };
             this.data.Cars.Add(carData);
@@ -99,6 +129,10 @@ namespace Project.Controllers
             return RedirectToAction(nameof(All));
             
         }
+        private bool UserIsDealer() =>
+            this.data
+            .Dealers
+            .Any(d => d.UserId == this.User.GetId());
         private IEnumerable<CarCategoryViewModel> GetCarCategories()
             => this.data
             .Categories

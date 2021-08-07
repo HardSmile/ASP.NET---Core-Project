@@ -14,6 +14,7 @@ using Project.Data.Models;
         }
         public DbSet<Car> Cars { get; init; }
         public DbSet<Category> Categories { get; init; }
+        public DbSet<Dealer> Dealers { get; init; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder

@@ -1,6 +1,4 @@
-﻿
-
-namespace Project.Data.Models
+﻿namespace Project.Data.Models
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;

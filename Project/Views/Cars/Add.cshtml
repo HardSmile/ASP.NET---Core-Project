@@ -1,12 +1,12 @@
 ﻿@model AddCarFormModel
 @{
-    ViewData["Title"] = "Add Car";
+    ViewBag.Title = "Add Car";
  }
-<div class="container">
+
     <div class="row">
         <div class="offset-md-2 col-md-8 col-sm-12">
             <form method="post" enctype="multipart/form-data">
-<h2>Add Car</h2>
+<h2>@ViewBag.Title</h2>
                 <div class="form-group">
                     <label asp-for="Brand"></label>
                     <input asp-for="Brand" class="form-control" placeholder="BMW">
@@ -42,4 +42,3 @@
             </form>
             </div>
         </div>
-</div>

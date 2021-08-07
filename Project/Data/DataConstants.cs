@@ -1,8 +1,4 @@
-﻿
-
-using System;
-
-namespace Project.Data
+﻿namespace Project.Data
 {
     public class DataConstants
     {
@@ -24,6 +20,10 @@ namespace Project.Data
   public class Dealer 
         {
             public const int DealerNameMaxLength = 25;
+            public const int DealerNameMinLength = 2;
+            public const int PhoneNumberMinLength = 6;
+            public const int PhoneNumberMaxLength = 30;
+
         }
 
     }

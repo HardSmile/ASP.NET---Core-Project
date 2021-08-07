@@ -16,6 +16,7 @@ namespace Project.Infrastructure
             using var scopedServices = app.ApplicationServices.CreateScope();
             var data = scopedServices.ServiceProvider.GetService<CarRentingDbContext>();
             data.Database.Migrate();
+            
             SeedCategories(data);
             return app;
              

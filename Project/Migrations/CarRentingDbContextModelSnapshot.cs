@@ -302,7 +302,7 @@ namespace Project.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Dealer");
+                    b.ToTable("Dealers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
