@@ -2,70 +2,39 @@
 namespace Project.Controllers
 {
     using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Identity;
+
     using Microsoft.AspNetCore.Mvc;
     using Project.Data;
     using Project.Data.Models;
     using Project.Infrastructure;
+
     using Project.Models.Cars;
+    using Project.Services.Cars;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Security.Claims;
+
 
     public class CarsController : Controller
     {
         private readonly CarRentingDbContext data;
-
-        public CarsController(CarRentingDbContext data) => this.data = data;
-
-
+        private readonly ICarService cars;
+        public CarsController(CarRentingDbContext data, ICarService cars) {
+            this.data = data;
+            this.cars = cars;
+        }
 
         public IActionResult All([FromQuery] AllCarsQueryModel query)
         {
-            var carsQuery = this.data.Cars.AsQueryable();
-            if (!string.IsNullOrWhiteSpace(query.Brand))
-            {
-                carsQuery = carsQuery.Where(c => c.Brand == query.Brand);
-            }
-            if (!string.IsNullOrWhiteSpace(query.SearchTerm))
-            {
-                carsQuery = carsQuery.Where(c => c.Brand.ToLower().Contains(query.SearchTerm.ToLower())
-                    || c.Model.ToLower().Contains(query.SearchTerm.ToLower())
-                    || c.Descriptiom.ToLower().Contains(query.SearchTerm.ToLower()));
-            }
-            carsQuery = query.Sorting switch
-            {
-                CarSorting.DateCreated => carsQuery
-                .OrderByDescending(c => c.Id),
-                CarSorting.Year => carsQuery
-                 .OrderByDescending(c => c.Year),
-                CarSorting.BrandAndModel => carsQuery
-                .OrderByDescending(c => c.Brand)
-                .ThenBy(c => c.Model)
-            };
-            var totalCars = carsQuery.Count();
-            var cars = carsQuery
-                .Skip((query.CurrentPage - 1) * AllCarsQueryModel.CarsPerPage)
-                .Take(AllCarsQueryModel.CarsPerPage)
-                .Select(c => new CarListingViewModel
-                {
-                    Id = c.Id,
-                    Brand = c.Brand,
-                    Model = c.Model,
-                    Year = c.Year,
-                    ImageUrl = c.ImageUrl,
-                    Category = c.Category.Name
-                })
-                .ToList();
-            var carBrands = this.data
-                .Cars
-                .Select(c => c.Brand)
-                .Distinct()
-                .ToList();
+            var queryResult = this.cars.All(
+                query.Brand,
+                query.SearchTerm,
+                query.Sorting,
+                query.CurrentPage,
+                AllCarsQueryModel.CarsPerPage);
+            var carBrands = this.cars.AllCarsBrands();
             query.Brands = carBrands;
-            query.Cars = cars;
-            query.TotalCars = totalCars;
+            query.TotalCars = queryResult.TotalCars;
+            query.Cars = queryResult.Cars;
             return View(query);
         }
 

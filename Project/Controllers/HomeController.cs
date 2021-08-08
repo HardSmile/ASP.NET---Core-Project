@@ -6,17 +6,26 @@ namespace Project.Controllers
     using Project.Models;
     using Project.Models.Cars;
     using Project.Models.Home;
+    using Project.Services.Statistics;
     using System.Diagnostics;
     using System.Linq;
 
     public class HomeController : Controller
     {
+        private readonly IStatisticsService statistics;
         private readonly CarRentingDbContext data;
 
-        public HomeController(CarRentingDbContext data) => this.data = data;
+        public HomeController(IStatisticsService statistics,
+            CarRentingDbContext data)
+        {
+            this.statistics = statistics;
+            this.data = data;
+        }
+
         public IActionResult Index() 
         {
-            var totalCars = this.data.Cars.Count();
+         
+
             var cars = this.data
                    .Cars
                    .OrderByDescending(c => c.Id)
@@ -30,9 +39,11 @@ namespace Project.Controllers
                    })
                    .Take(3)
                    .ToList();
+            var totalStatistics = this.statistics.Total();
             return View(new IndexViewModel
             {
-                TotalCars = totalCars,
+                TotalCars = totalStatistics.TotalCars,
+                TotalUsers = totalStatistics.TotalUsers,
                 Cars = cars
             });
         }

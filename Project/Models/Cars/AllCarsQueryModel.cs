@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Project.Services.Cars;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Project.Models.Cars
@@ -14,6 +15,6 @@ namespace Project.Models.Cars
         public int CurrentPage { get; init; } = 1;
         public int TotalCars { get; set; }
 
-        public IEnumerable<CarListingViewModel> Cars { get; set; }
+        public IEnumerable<CarServiceModel> Cars { get; set; }
     }
 }
