@@ -2,7 +2,8 @@
 namespace Project.Services.Cars
 {
 using Project.Data;
-using Project.Models;
+    using Project.Data.Models;
+    using Project.Models;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -28,7 +29,7 @@ using System.Linq;
             {
                 carsQuery = carsQuery.Where(c => c.Brand.ToLower().Contains(searchTerm.ToLower())
                     || c.Model.ToLower().Contains(searchTerm.ToLower())
-                    || c.Descriptiom.ToLower().Contains(searchTerm.ToLower()));
+                    || c.Description.ToLower().Contains(searchTerm.ToLower()));
             }
             carsQuery = sorting switch
             {
@@ -41,19 +42,10 @@ using System.Linq;
                 .ThenBy(c => c.Model)
             };
             var totalCars = carsQuery.Count();
-            var cars = carsQuery
+            var cars = GetCars(carsQuery
                 .Skip((currentPage - 1) * carsPerPage)
-                .Take(carsPerPage)
-                .Select(c => new CarServiceModel
-                {
-                    Id = c.Id,
-                    Brand = c.Brand,
-                    Model = c.Model,
-                    Year = c.Year,
-                    ImageUrl = c.ImageUrl,
-                    Category = c.Category.Name
-                })
-                .ToList();
+                .Take(carsPerPage));
+                
             return new CarQueryServiceModel
             {
                 TotalCars = totalCars,
@@ -62,6 +54,72 @@ using System.Linq;
                 Cars = cars
             };
         }
+        public CarDetailsServiceModel Details(int id)
+      => this.data.Cars
+            .Where(d => d.Id == id)
+            .Select(c => new CarDetailsServiceModel
+            {
+                Id = c.Id,
+                Brand = c.Brand,
+                Model = c.Model,
+                Description = c.Description,
+                Year = c.Year,
+                ImageUrl = c.ImageUrl,
+                Category = c.Category.Name,
+               DeakerId = c.DealerId,
+               DealerName = c.Dealer.Name,
+               UserId = c.Dealer.UserId
+                
+                
+            })
+            .FirstOrDefault();
+
+        public int Create(string brand, string model, string description, int year, string imageUrl, int categoryId, int dealerId)
+        {
+            var carData = new Car
+            {
+                Brand = brand,
+                Model = model,
+                Description = description,
+                Year = year,
+                ImageUrl = imageUrl,
+                CategoryId = categoryId,
+                DealerId = dealerId
+            };
+            this.data.Cars.Add(carData);
+            this.data.SaveChanges();
+            return carData.Id;
+        }
+        public bool Edit(int id,string brand, string model, string description, int year, string imageUrl, int categoryId)
+        {
+            var carData = this.data.Cars.Find(id);
+     if(carData == null)
+            {
+                return false;
+            }
+
+            carData.Id = id;
+            carData.Brand = brand;
+            carData.Model = model;
+            carData.Description = description;
+            carData.Year = year;
+            carData.ImageUrl = imageUrl;
+            carData.CategoryId = categoryId;
+      
+        
+            this.data.SaveChanges();
+            return true;
+        }
+
+
+        public IEnumerable<CarServiceModel> ByUser(string userId)
+      => this.GetCars(this.data
+          .Cars
+          .Where(c => c.Dealer.UserId == userId));
+        public bool IsByDealer(int carId, int dealerId)
+=> data
+            .Cars
+            .Any(c => c.Id == carId && c.DealerId == dealerId); 
         public IEnumerable<string> AllCarsBrands() => 
             this.data
             .Cars
@@ -69,6 +127,36 @@ using System.Linq;
             .Distinct()
             .OrderBy(c => c)
             .ToList();
+        public bool CategoryExist(int categoryId)
+        =>
+            this.data.Categories
+            .Any(c => c.Id == categoryId);
+        
+
+        private IEnumerable<CarServiceModel> GetCars(IQueryable<Car> carQuery)
+            =>carQuery
+            .Select(c => new CarServiceModel
+            {
+                Id = c.Id,
+                Brand = c.Brand,
+                Model = c.Model,
+                Year = c.Year,
+                ImageUrl = c.ImageUrl,
+                Category = c.Category.Name
+            })
+                .ToList();
+
+        public IEnumerable<CarCategoryServiceModel> AllCarCategories()
+        
+                     => this.data
+            .Categories
+            .Select(c => new CarCategoryServiceModel
+            {
+                Id = c.Id,
+                Name = c.Name
+            })
+            .ToList();
+
 
     }
 }

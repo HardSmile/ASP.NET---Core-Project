@@ -14,7 +14,7 @@ namespace Project.Data.Models
         [MaxLength(CarModelMaxLength)]
         public string Model { get; set; }
         [Required]
-        public string Descriptiom { get; set; }
+        public string Description { get; set; }
         [Required]
         public string ImageUrl { get; set; }
       

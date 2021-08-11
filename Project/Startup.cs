@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Project.Data;
     using Project.Infrastructure;
     using Project.Services.Cars;
+    using Project.Services.Dealers;
     using Project.Services.Statistics;
 
     public class Startup
@@ -42,6 +43,7 @@ using Project.Data;
                 .AddControllersWithViews();
             services.AddTransient<IStatisticsService, StatisticsService>();
             services.AddTransient<ICarService, CarService>();
+            services.AddTransient<IDealerService, DealerService>();
         }
 
         

@@ -1,11 +1,12 @@
 ﻿
 namespace Project.Models.Cars
 {
-using System;
+    using Project.Services.Cars;
+    using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using static Data.DataConstants.Car;
-    public class AddCarFormModel
+    public class CarFormModel
     {
         [Required]
         [StringLength(CarBrandMaxLength,MinimumLength = CarBrandMinLength)]
@@ -25,7 +26,7 @@ using static Data.DataConstants.Car;
         public int Year { get; init ; }
         [Display(Name = "Categorty")]
         public int CategoryId { get; init; }
-        public IEnumerable<CarCategoryViewModel> Categories { get; set; }
+        public IEnumerable<CarCategoryServiceModel> Categories { get; set; }
      
 
     }
