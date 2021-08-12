@@ -1,17 +1,19 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using Project.Data.Models
 @using Project.Services.Dealers
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
 @inject IDealerService Dealers
 
 
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
-            var userId = User.GetId();
-            var userIdDealer = Dealers.IsDealer(userId);
-        
-        @if (userIdDealer)
+        var userId = User.Id();
+        var userIdDealer = Dealers.IsDealer(userId);
+        var userIsAdmin = User.IsAdmin();
+
+        @if (userIdDealer && !userIsAdmin)
         {
             <li class="nav-item">
                 <a class="nav-link text-dark" asp-area="" asp-controller="Cars" asp-action="Mine">My Cars </a>

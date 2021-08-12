@@ -1,4 +1,3 @@
-
 namespace Project
 {
     using Microsoft.AspNetCore.Hosting;

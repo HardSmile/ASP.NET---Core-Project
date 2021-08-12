@@ -1,17 +1,16 @@
-﻿
-namespace Project.Data
+﻿namespace Project.Data
 {
-    using Microsoft.AspNetCore.Identity;
-    using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
+ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Project.Data.Models;
-    public class CarRentingDbContext : IdentityDbContext
+    public class CarRentingDbContext : IdentityDbContext<User>
     {
-
         public CarRentingDbContext(DbContextOptions<CarRentingDbContext> options)
-            : base(options)
+             : base(options)
         {
         }
+
         public DbSet<Car> Cars { get; init; }
         public DbSet<Category> Categories { get; init; }
         public DbSet<Dealer> Dealers { get; init; }
@@ -33,7 +32,7 @@ using Project.Data.Models;
 
             builder
                 .Entity<Dealer>()
-                .HasOne<IdentityUser>()
+                .HasOne<User>()
                 .WithOne()
                 .HasForeignKey<Dealer>(d => d.UserId)
                 .OnDelete(DeleteBehavior.Restrict);

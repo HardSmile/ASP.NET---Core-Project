@@ -5,7 +5,7 @@ namespace Project.Controllers
     using Microsoft.AspNetCore.Mvc;
     using Project.Data;
     using Project.Data.Models;
-    using Project.Infrastructure;
+    using Project.Infrastructure.Extensions;
     using Project.Models;
     using Project.Models.Dealers;
     using System.Linq;
@@ -20,13 +20,13 @@ namespace Project.Controllers
             => this.data = data;
      
         [Authorize]
-        public IActionResult Create()
+        public IActionResult Become()
             =>View();
         [HttpPost]
         [Authorize]
-        public IActionResult Create(BecomeDealerFormModel dealer)
+        public IActionResult Become(BecomeDealerFormModel dealer)
         {
-            var userId = this.User.GetId();
+            var userId = this.User.Id();
             var userIdAlreadyDealer = this.data
                 .Dealers
                 .Any(d => d.UserId == userId);

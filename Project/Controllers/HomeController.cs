@@ -1,56 +1,47 @@
-﻿
-namespace Project.Controllers
+﻿namespace Project.Controllers
 {
-    using Microsoft.AspNetCore.Mvc;
-    using Project.Data;
-    using Project.Models;
-    using Project.Models.Cars;
-    using Project.Models.Home;
-    using Project.Services.Statistics;
-    using System.Diagnostics;
+    using System;
+    using System.Collections.Generic;
     using System.Linq;
+    using Project.Services.Cars;
+    using Project.Services.Cars.Models;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Caching.Memory;
+
+    using static WebConstants.Cache;
 
     public class HomeController : Controller
     {
-        private readonly IStatisticsService statistics;
-        private readonly CarRentingDbContext data;
+        private readonly ICarService cars;
+        private readonly IMemoryCache cache;
 
-        public HomeController(IStatisticsService statistics,
-            CarRentingDbContext data)
+        public HomeController(
+            ICarService cars,
+            IMemoryCache cache)
         {
-            this.statistics = statistics;
-            this.data = data;
+            this.cars = cars;
+            this.cache = cache;
         }
 
-        public IActionResult Index() 
+        public IActionResult Index()
         {
-         
+            var latestCars = this.cache.Get<List<LatestCarServiceModel>>(LatestCarsCacheKey);
 
-            var cars = this.data
-                   .Cars
-                   .OrderByDescending(c => c.Id)
-                   .Select(c => new CarIndexViewModel
-                   {
-                       Id = c.Id,
-                       Brand = c.Brand,
-                       Model = c.Model,
-                       Year = c.Year,
-                       ImageUrl = c.ImageUrl
-                   })
-                   .Take(3)
-                   .ToList();
-            var totalStatistics = this.statistics.Total();
-            return View(new IndexViewModel
+            if (latestCars == null)
             {
-                TotalCars = totalStatistics.TotalCars,
-                TotalUsers = totalStatistics.TotalUsers,
-                Cars = cars
-            });
+                latestCars = this.cars
+                   .Latest()
+                   .ToList();
+
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(15));
+
+                this.cache.Set(LatestCarsCacheKey, latestCars, cacheOptions);
+            }
+
+            return View(latestCars);
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()=>
-        View();
-        
+        public IActionResult Error() => View();
     }
 }

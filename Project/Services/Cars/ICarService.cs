@@ -1,40 +1,54 @@
 ﻿
 namespace Project.Services.Cars
 {
-    using Project.Models;
-    using Project.Models.Cars;
     using System.Collections.Generic;
+    using Project.Models;
+    using Project.Services.Cars.Models;
 
     public interface ICarService
     {
         CarQueryServiceModel All(
-            string brand,
-            string searchTerm,
-            CarSorting sorting,
-            int currentPage,
-            int carsPerPage);
-        CarDetailsServiceModel Details(int id);
+            string brand = null,
+            string searchTerm = null,
+            CarSorting sorting = CarSorting.DateCreated,
+            int currentPage = 1,
+            int carsPerPage = int.MaxValue,
+            bool publicOnly = true);
+
+        IEnumerable<LatestCarServiceModel> Latest();
+
+        CarDetailsServiceModel Details(int carId);
+
         int Create(
             string brand,
-               string model,
-                string description,
-                int year,
-               string imageUrl,
-               int categoryId,
-                int dealerId);
+            string model,
+            string description,
+            string imageUrl,
+            int year,
+            int categoryId,
+            int dealerId);
+
         bool Edit(
-            int id,
+            int carId,
             string brand,
-               string model,
-                string description,
-                int year,
-               string imageUrl,
-               int categoryId
-                );
+            string model,
+            string description,
+            string imageUrl,
+            int year,
+            int categoryId,
+            bool isPublic);
+
         IEnumerable<CarServiceModel> ByUser(string userId);
+        
         bool IsByDealer(int carId, int dealerId);
-        IEnumerable<string> AllCarsBrands();
-        IEnumerable<CarCategoryServiceModel> AllCarCategories();
-        bool CategoryExist(int categoryId);
+
+        void ChangeVisility(int carId);
+
+        IEnumerable<string> AllBrands();
+
+        IEnumerable<CarCategoryServiceModel> AllCategories();
+
+        bool CategoryExists(int categoryId);
+     
     }
 }

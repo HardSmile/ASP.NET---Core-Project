@@ -1,15 +1,15 @@
-
-
 namespace Project
 {
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Project.Data;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Identity;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+    using Project.Data;
+    using Project.Data.Models;
     using Project.Infrastructure;
     using Project.Services.Cars;
     using Project.Services.Dealers;
@@ -17,9 +17,9 @@ using Project.Data;
 
     public class Startup
     {
-        public Startup(IConfiguration configuration)=>
+        public Startup(IConfiguration configuration) =>
             Configuration = configuration;
-        
+
 
         public IConfiguration Configuration { get; }
 
@@ -27,29 +27,34 @@ using Project.Data;
         {
             services
                 .AddDbContext<CarRentingDbContext>(options => options
-                    .UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                    .UseSqlServer(this.Configuration.GetConnectionString("DefaultConnection")));
             services.AddDatabaseDeveloperPageExceptionFilter();
 
-            services.AddDefaultIdentity<IdentityUser>(options =>
-            {
-                options.Password.RequireDigit = false;
-                options.Password.RequireLowercase = false;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
-            })
+          
+
+            services.AddDefaultIdentity<User>(options =>
+           {
+               options.Password.RequireDigit = false;
+               options.Password.RequireLowercase = false;
+               options.Password.RequireNonAlphanumeric = false;
+               options.Password.RequireUppercase = false;
+           })
+                .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<CarRentingDbContext>();
-            
+            services.AddAutoMapper(typeof(Startup));
             services
-                .AddControllersWithViews();
+                .AddControllersWithViews(options => {
+                    options.Filters.Add<AutoValidateAntiforgeryTokenAttribute>();
+                });
             services.AddTransient<IStatisticsService, StatisticsService>();
             services.AddTransient<ICarService, CarService>();
             services.AddTransient<IDealerService, DealerService>();
         }
 
-        
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.PrepareDatabase();
+           
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -69,10 +74,11 @@ using Project.Data;
                 .UseAuthorization()
                 .UseEndpoints(endpoints =>
             {
+                endpoints.MapDefaultAreaRoute();
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapRazorPages();
             });
-            
+
         }
     }
 }

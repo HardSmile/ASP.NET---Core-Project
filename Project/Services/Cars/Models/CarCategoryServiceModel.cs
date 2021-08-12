@@ -1,4 +1,4 @@
-﻿namespace Project.Services.Cars
+﻿namespace Project.Services.Cars.Models
 {
     public class CarCategoryServiceModel
     {

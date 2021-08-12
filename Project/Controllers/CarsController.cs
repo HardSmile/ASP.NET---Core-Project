@@ -1,25 +1,31 @@
 ﻿
 namespace Project.Controllers
 {
-    using Microsoft.AspNetCore.Authorization;
-
-    using Microsoft.AspNetCore.Mvc;
-    using Project.Data;
-    using Project.Infrastructure;
+    using AutoMapper;
+    using Project.Infrastructure.Extensions;
     using Project.Models.Cars;
     using Project.Services.Cars;
     using Project.Services.Dealers;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
 
-
+    using static WebConstants;
+    using Project.Infrastructure;
 
     public class CarsController : Controller
     {
         private readonly ICarService cars;
         private readonly IDealerService dealers;
-        public CarsController(CarRentingDbContext data, ICarService cars, IDealerService dealers)
+        private readonly IMapper mapper;
+
+        public CarsController(
+            ICarService cars,
+            IDealerService dealers,
+            IMapper mapper)
         {
             this.cars = cars;
             this.dealers = dealers;
+            this.mapper = mapper;
         }
 
         public IActionResult All([FromQuery] AllCarsQueryModel query)
@@ -30,134 +36,157 @@ namespace Project.Controllers
                 query.Sorting,
                 query.CurrentPage,
                 AllCarsQueryModel.CarsPerPage);
-            var carBrands = this.cars.AllCarsBrands();
+
+            var carBrands = this.cars.AllBrands();
+
             query.Brands = carBrands;
             query.TotalCars = queryResult.TotalCars;
             query.Cars = queryResult.Cars;
+
             return View(query);
         }
+
         [Authorize]
         public IActionResult Mine()
         {
-            var myCars = this.cars.ByUser(this.User.GetId());
+            var myCars = this.cars.ByUser(this.User.Id());
+
             return View(myCars);
+        }
+
+        public IActionResult Details(int id, string information)
+        {
+            var car = this.cars.Details(id);
+
+            if (information != car.GetInformation())
+            {
+                return BadRequest();
+            }
+
+            return View(car);
         }
 
         [Authorize]
         public IActionResult Add()
         {
-            if (!this.dealers.IsDealer(this.User.GetId()))
+            if (!this.dealers.IsDealer(this.User.Id()))
             {
-               
-                return RedirectToAction(nameof(DealersController.Create), "Dealers");
+                return RedirectToAction(nameof(DealersController.Become), "Dealers");
             }
-            else
-            {
 
             return View(new CarFormModel
-        {
-                Categories = this.cars.AllCarCategories()
-        });
+            {
+                Categories = this.cars.AllCategories()
+            });
+        }
 
-            }
-                
-    }
         [HttpPost]
         [Authorize]
         public IActionResult Add(CarFormModel car)
         {
-            var dealerId = this.dealers.IdUser(this.User.GetId());
-            if(dealerId == 0)
-            {
-                return RedirectToAction(nameof(DealersController.Create), "Dealers");
-            }
-               
-          
+            var dealerId = this.dealers.IdUser(this.User.Id());
 
-            if (!this.cars.CategoryExist(car.CategoryId))
+            if (dealerId == 0)
+            {
+                return RedirectToAction(nameof(DealersController.Become), "Dealers");
+            }
+
+            if (!this.cars.CategoryExists(car.CategoryId))
             {
                 this.ModelState.AddModelError(nameof(car.CategoryId), "Category does not exist.");
             }
+
             if (!ModelState.IsValid)
             {
-                car.Categories = this.cars.AllCarCategories();
+                car.Categories = this.cars.AllCategories();
+
                 return View(car);
             }
-            this.cars.Create(
+
+            var carId = this.cars.Create(
                 car.Brand,
                 car.Model,
                 car.Description,
-                car.Year,
                 car.ImageUrl,
+                car.Year,
                 car.CategoryId,
                 dealerId);
-            return RedirectToAction(nameof(All));
-            
+
+            //TempData[GlobalMessageKey] = "You car was added and is awaiting for approval!";
+
+            return RedirectToAction(nameof(Details), new { id = carId, information = car.GetInformation() });
         }
+
         [Authorize]
-        public IActionResult Edit (int id)
+        public IActionResult Edit(int id)
         {
+            var userId = this.User.Id();
 
-            if (!this.dealers.IsDealer(this.User.GetId()))
+            if (!this.dealers.IsDealer(userId) && !User.IsAdmin())
             {
-
-                return RedirectToAction(nameof(DealersController.Create), "Dealers");
+                return RedirectToAction(nameof(DealersController.Become), "Dealers");
             }
+
             var car = this.cars.Details(id);
-            if(car.UserId != this.User.GetId())
+
+            if (car.UserId != userId && !User.IsAdmin())
             {
                 return Unauthorized();
             }
 
-                return View(new CarFormModel
-                {Brand=car.Brand,
-                Model = car.Model,
-                Description = car.Description,
-                ImageUrl = car.ImageUrl,
-                Year = car.Year,
-                CategoryId = car.CategoryId,
+            var carForm = this.mapper.Map<CarFormModel>(car);
 
-                    Categories = this.cars.AllCarCategories()
-                });
-            }
+            carForm.Categories = this.cars.AllCategories();
 
-     [Authorize]
-     [HttpPost]
-     public IActionResult Edit (int id, CarFormModel car)
+            return View(carForm);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult Edit(int id, CarFormModel car)
         {
-            var dealerId = this.dealers.IdUser(this.User.GetId());
-            if (dealerId == 0)
+            var dealerId = this.dealers.IdUser(this.User.Id());
+
+            if (dealerId == 0 && !User.IsAdmin())
             {
-                return RedirectToAction(nameof(DealersController.Create), "Dealers");
+                return RedirectToAction(nameof(DealersController.Become), "Dealers");
             }
 
-
-
-            if (!this.cars.CategoryExist(car.CategoryId))
+            if (!this.cars.CategoryExists(car.CategoryId))
             {
                 this.ModelState.AddModelError(nameof(car.CategoryId), "Category does not exist.");
             }
+
             if (!ModelState.IsValid)
             {
-                car.Categories = this.cars.AllCarCategories();
+                car.Categories = this.cars.AllCategories();
+
                 return View(car);
             }
-            if (!this.cars.IsByDealer(id,dealerId))
+
+            if (!this.cars.IsByDealer(id, dealerId) && !User.IsAdmin())
             {
                 return BadRequest();
             }
-            this.cars.Edit(
+
+            var edited = this.cars.Edit(
                 id,
                 car.Brand,
                 car.Model,
                 car.Description,
-                car.Year,
                 car.ImageUrl,
-                car.CategoryId
-                );
-        
-            return RedirectToAction(nameof(All));
+                car.Year,
+                car.CategoryId,
+                this.User.IsAdmin());
+
+            if (!edited)
+            {
+                return BadRequest();
+            }
+
+            //TempData[GlobalMessageKey] = $"You car was edited{(this.User.IsAdmin() ? string.Empty : " and is awaiting for approval")}!";
+
+            return RedirectToAction(nameof(Details), new { id, information = car.GetInformation() });
         }
-  
     }
 }
